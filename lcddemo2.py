@@ -37,7 +37,7 @@ from picamera import Color
 
 from tflite_runtime.interpreter import Interpreter
 
-FONT_SMALL = ImageFont.truetype('fonts/truetype/freefont/FreeSansBold.ttf', 8)
+FONT_SMALL = ImageFont.truetype('fonts/truetype/freefont/FreeSansBold.ttf', 10)
 FONT_LARGE = ImageFont.truetype('fonts/truetype/freefont/FreeSansBold.ttf', 12)
 
 def clamp(minvalue, value, maxvalue):
