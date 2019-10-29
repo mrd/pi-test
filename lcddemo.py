@@ -19,8 +19,9 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-import LCD_1in8
-import LCD_Config
+#import LCD_1in8
+#import LCD_Config
+from st7735_ijl20.st7735 import ST7735
 
 from PIL import Image
 from PIL import ImageDraw
@@ -33,10 +34,10 @@ import time
 import numpy as np
 import picamera
 from picamera import Color
-import pdb
 
-from PIL import Image
 from tflite_runtime.interpreter import Interpreter
+
+FONT_SMALL = ImageFont.truetype('fonts/truetype/freefont/FreeMonoBold.ttf', 8)
 
 def clamp(minvalue, value, maxvalue):
     return max(minvalue, min(value, maxvalue))
@@ -73,16 +74,23 @@ def classify_image(interpreter, image, top_k=1):
   return output
 
 
+DISPLAY_WIDTH = 160                # LCD panel width in pixels
+DISPLAY_HEIGHT = 128               # LCD panel height
 def main():
   ##################################################
   # Initialise LCD
-  LCD = LCD_1in8.LCD()
-  Lcd_ScanDir = LCD_1in8.SCAN_DIR_DFT
-  LCD.LCD_Init(Lcd_ScanDir)
-  screenbuf = Image.new("RGB", (LCD.LCD_Dis_Column, LCD.LCD_Dis_Page), "WHITE")
+  ## LCD = LCD_1in8.LCD()
+  LCD = ST7735()
+  ## Lcd_ScanDir = LCD_1in8.SCAN_DIR_DFT
+  ## LCD.LCD_Init(Lcd_ScanDir)
+  LCD.begin()
+  ## screenbuf = Image.new("RGB", (LCD.LCD_Dis_Column, LCD.LCD_Dis_Page), "WHITE")
+  screenbuf = Image.new("RGB", (DISPLAY_WIDTH, DISPLAY_HEIGHT), "WHITE")
   draw = ImageDraw.Draw(screenbuf)
-  draw.text((33, 22), 'LCD Demo', fill = "BLUE")
-  LCD.LCD_PageImage(screenbuf)
+  draw.text((33, 22), 'LCD Demo', fill = "BLUE", font = FONT_SMALL)
+  ## LCD.LCD_PageImage(screenbuf)
+  LCD.display(screenbuf)
+
   ##################################################
 
   parser = argparse.ArgumentParser()
@@ -131,8 +139,13 @@ def main():
             right = clamp(0,results[0][i][3],1)
             msg += ("{0:20} {1:3.1f}% {2:3.3f} {3:3.3f} {4:3.3f} {5:3.3f} {6: 5.1f}ms\n".format(label,prob*100,top,left,bottom,right,elapsed_ms))
         draw.rectangle([(0,0),(160,128)], fill = "WHITE")
-        draw.text((0, 0), msg, fill = "BLUE")
-        LCD.LCD_PageImage(screenbuf)
+        draw.rectangle([(0,0),(160,128)], outline = "RED")
+        draw.text((0, 0), msg, fill = "BLUE", font = FONT_SMALL)
+        ## LCD.LCD_PageImage(screenbuf)
+        screenbuf.paste(image.resize((DISPLAY_WIDTH, DISPLAY_HEIGHT)))
+        # draw.rectangle([(0,0),(160,128)], outline = "RED")
+        draw.text((0, 0), msg, fill = "BLUE", font = FONT_SMALL)
+        LCD.display(screenbuf)
         msg += ("--------------------------------------------------\n")
         print(msg)
 
