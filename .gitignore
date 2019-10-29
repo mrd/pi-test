@@ -1,0 +1,4 @@
+*~
+*.zip
+*.whl
+__pycache__/

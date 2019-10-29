@@ -37,7 +37,8 @@ from picamera import Color
 
 from tflite_runtime.interpreter import Interpreter
 
-FONT_SMALL = ImageFont.truetype('fonts/truetype/freefont/FreeMonoBold.ttf', 8)
+FONT_SMALL = ImageFont.truetype('fonts/truetype/freefont/FreeSansBold.ttf', 8)
+FONT_LARGE = ImageFont.truetype('fonts/truetype/freefont/FreeSansBold.ttf', 12)
 
 def clamp(minvalue, value, maxvalue):
     return max(minvalue, min(value, maxvalue))
@@ -87,7 +88,7 @@ def main():
   ## screenbuf = Image.new("RGB", (LCD.LCD_Dis_Column, LCD.LCD_Dis_Page), "WHITE")
   screenbuf = Image.new("RGB", (DISPLAY_WIDTH, DISPLAY_HEIGHT), "WHITE")
   draw = ImageDraw.Draw(screenbuf)
-  draw.text((33, 22), 'LCD Demo', fill = "BLUE", font = FONT_SMALL)
+  draw.text((33, 22), 'Initialising...', fill = "BLUE", font = FONT_LARGE)
   ## LCD.LCD_PageImage(screenbuf)
   LCD.display(screenbuf)
 
@@ -129,20 +130,45 @@ def main():
         stream.seek(0)
         stream.truncate()
 
+        # paste camera captured image into screen buffer
+        screenbuf.paste(image.resize((DISPLAY_WIDTH, DISPLAY_HEIGHT)))
+
+        availColours = ['salmon', 'olive', 'orange', 'purple' 'aqua', 'darkgray', 'yellow', 'sienna', 'red', 'blue', 'green']
+        usedColours = {}
         msg = ""
         for i in range(10):
             label = labels[results[1][i]+1]
             prob = clamp(0,results[2][i],1)
-            top = clamp(0,results[0][i][0],1)
-            left = clamp(0,results[0][i][1],1)
-            bottom = clamp(0,results[0][i][2],1)
-            right = clamp(0,results[0][i][3],1)
-            msg += ("{0:20} {1:3.1f}% {2:3.3f} {3:3.3f} {4:3.3f} {5:3.3f} {6: 5.1f}ms\n".format(label,prob*100,top,left,bottom,right,elapsed_ms))
-        draw.rectangle([(0,0),(160,128)], fill = "WHITE")
-        ## LCD.LCD_PageImage(screenbuf)
-        screenbuf.paste(image.resize((DISPLAY_WIDTH, DISPLAY_HEIGHT)))
-        # draw.rectangle([(0,0),(160,128)], outline = "RED")
-        draw.text((0, 0), msg, fill = "BLUE", font = FONT_SMALL)
+            if prob >= 0.5:
+                if label in usedColours:
+                    colour = usedColours[label]
+                elif availColours == []:
+                    colour = 'salmon'
+                else:
+                    colour = availColours.pop()
+                    usedColours[label] = colour
+                    
+                top = clamp(0,results[0][i][0],1)
+                left = clamp(0,results[0][i][1],1)
+                bottom = clamp(0,results[0][i][2],1)
+                right = clamp(0,results[0][i][3],1)
+                # draw bounding box
+                draw.rectangle([(left*DISPLAY_WIDTH,top*DISPLAY_HEIGHT),(right*DISPLAY_WIDTH,bottom*DISPLAY_HEIGHT)]
+                               , outline = colour)
+                desc = ("{0} {1:3.1f}%".format(label,prob*100))
+                txtw, txth = FONT_SMALL.getsize(desc)
+                # draw label rectangle
+                draw.rectangle([(left*DISPLAY_WIDTH,top*DISPLAY_HEIGHT),(left*DISPLAY_WIDTH+txtw,top*DISPLAY_HEIGHT+txth)]
+                               , fill = colour)
+                # draw label
+                draw.text((left*DISPLAY_WIDTH, top*DISPLAY_HEIGHT), desc, fill = "WHITE", font = FONT_SMALL)
+
+                # record info for log
+                msg += ("{0:20} {1:3.1f}% {2:3.3f} {3:3.3f} {4:3.3f} {5:3.3f} {6: 5.1f}ms\n".format(label,prob*100,top,left,bottom,right,elapsed_ms))
+
+
+        # draw.text((0, 0), msg, fill = "BLUE", font = FONT_SMALL)
+
         LCD.display(screenbuf)
         msg += ("--------------------------------------------------\n")
         print(msg)
@@ -156,7 +182,7 @@ def main():
         left = clamp(0,results[0][bestIdx][1],1)
         bottom = clamp(0,results[0][bestIdx][2],1)
         right = clamp(0,results[0][bestIdx][3],1)
-        camera.annotate_text = '%s (%.1f%%)\n%.1fms' % (label, prob*100, elapsed_ms)
+        # camera.annotate_text = '%s (%.1f%%)\n%.1fms' % (label, prob*100, elapsed_ms)
     finally:
       camera.stop_preview()
       LCD.LCD_Clear()
