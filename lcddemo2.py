@@ -130,9 +130,9 @@ def main():
         stream.seek(0)
         image = Image.open(stream).convert('RGB').resize((width, height),
                                                          Image.ANTIALIAS)
-        start_time = time.time()
+        start_time = time.process_time()
         results = classify_image(interpreter, image)
-        elapsed_ms = (time.time() - start_time) * 1000
+        elapsed_ms = (time.process_time() - start_time) * 1000
         stream.seek(0)
         stream.truncate()
 
@@ -172,8 +172,9 @@ def main():
                 # record info for log
                 msg += ("{0:20} {1:3.1f}% {2:3.3f} {3:3.3f} {4:3.3f} {5:3.3f} {6: 5.1f}ms\n".format(label,prob*100,top,left,bottom,right,elapsed_ms))
 
-
-        # draw.text((0, 0), msg, fill = "BLUE", font = FONT_SMALL)
+        elapsed_txt = "{0: 5.1f}ms".format(elapsed_ms)
+        txtw, txth = FONT_SMALL.getsize(elapsed_txt)
+        draw.text((DISPLAY_WIDTH - txtw, 0), elapsed_txt, fill = "WHITE", font = FONT_SMALL)
 
         LCD.display(screenbuf)
         msg += ("--------------------------------------------------\n")
