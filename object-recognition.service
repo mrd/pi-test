@@ -1,0 +1,9 @@
+[Unit]
+Description = LCD demo of object recognition
+After = network.target
+
+[Service]
+ExecStart = /home/pi/lite/object-recognition-service.sh
+
+[Install]
+WantedBy = multi-user.target

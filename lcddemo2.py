@@ -32,10 +32,16 @@ import argparse
 import io
 import time
 import numpy as np
+import signal
 import picamera
 from picamera import Color
 
 from tflite_runtime.interpreter import Interpreter
+
+
+class SigTerm(SystemExit): pass
+def sigterm(sig,frm): raise SigTerm
+signal.signal(15,sigterm)
 
 FONT_SMALL = ImageFont.truetype('fonts/truetype/freefont/FreeSansBold.ttf', 10)
 FONT_LARGE = ImageFont.truetype('fonts/truetype/freefont/FreeSansBold.ttf', 12)
@@ -133,7 +139,7 @@ def main():
         # paste camera captured image into screen buffer
         screenbuf.paste(image.resize((DISPLAY_WIDTH, DISPLAY_HEIGHT)))
 
-        availColours = ['salmon', 'olive', 'orange', 'purple' 'aqua', 'darkgray', 'yellow', 'sienna', 'red', 'blue', 'green']
+        availColours = ['salmon', 'olive', 'orange', 'purple', 'aqua', 'darkgray', 'yellow', 'sienna', 'red', 'blue', 'green']
         usedColours = {}
         msg = ""
         for i in range(10):
@@ -147,7 +153,7 @@ def main():
                 else:
                     colour = availColours.pop()
                     usedColours[label] = colour
-                    
+
                 top = clamp(0,results[0][i][0],1)
                 left = clamp(0,results[0][i][1],1)
                 bottom = clamp(0,results[0][i][2],1)
